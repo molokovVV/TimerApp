@@ -66,6 +66,7 @@ class ViewController: UIViewController, CAAnimationDelegate {
         stack.addArrangedSubview(timerLabel)
         stack.addArrangedSubview(timerButtonPlay)
         stack.addArrangedSubview(timerButtonCancel)
+        
         return stack
     }()
     
@@ -200,7 +201,11 @@ class ViewController: UIViewController, CAAnimationDelegate {
     }
     
     private func startTimer() {
-        timer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
+        timer = Timer.scheduledTimer(timeInterval: 0.001, 
+                                     target: self, 
+                                     selector: #selector(updateTimer), 
+                                     userInfo: nil, 
+                                     repeats: true)
     }
 
     private func changeToWork() {
@@ -211,6 +216,7 @@ class ViewController: UIViewController, CAAnimationDelegate {
             isStarted = false
             isWorkTime = true
             timer.invalidate()
+            
             return
         }
         
@@ -226,6 +232,7 @@ class ViewController: UIViewController, CAAnimationDelegate {
             isStarted = false
             isWorkTime = false
             timer.invalidate()
+            
             return
         }
         
@@ -238,10 +245,12 @@ class ViewController: UIViewController, CAAnimationDelegate {
         if isWorkTime {
             let minutes = Int(workTime) / 60 % 60
             let seconds = Int(workTime) % 60
+            
             return String(format:"%02i:%02i", minutes, seconds)
         } else {
             let minutes = Int(relaxTime) / 60 % 60
             let seconds = Int(relaxTime) % 60
+            
             return String(format:"%02i:%02i", minutes, seconds)
         }
     }
@@ -252,14 +261,12 @@ class ViewController: UIViewController, CAAnimationDelegate {
             timerLabel.text = "00:05"
             timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
             view.backgroundColor = .white
-            
         } else {
             timerButtonCancel.isEnabled = false
             timerLabel.text = "00:20"
             timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
             foreProgressLayer.strokeColor = UIColor.black.cgColor
             view.backgroundColor = .black
-            
         }
     }
 
