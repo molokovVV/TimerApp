@@ -39,14 +39,16 @@ class ViewController: UIViewController, CAAnimationDelegate {
     
     private lazy var timerButtonPlay: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "playIconWork"), for: .normal)
+        button.addTarget(self, action: #selector(buttonStarted), for: .touchUpInside)
+        button.setImage(UIImage(named: "playIcon"), for: .normal)
         
         return button
     }()
     
     private lazy var timerButtonCancel: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "stopIconWork"), for: .normal)
+        button.addTarget(self, action: #selector(buttonCanceled), for: .touchUpInside)
+        button.setImage(UIImage(named: "stopIcon"), for: .normal)
         button.isEnabled = false
         button.alpha = 0.5
         
@@ -97,7 +99,14 @@ class ViewController: UIViewController, CAAnimationDelegate {
                                               startAngle: -90.degreesToRadians, 
                                               endAngle: 270.degreesToRadians, 
                                               clockwise: true).cgPath
-        foreProgressLayer.strokeColor = UIColor.white.cgColor
+        foreProgressLayer.strokeColor = {
+            if isWorkTime {
+                foreProgressLayer.strokeColor = UIColor.black.cgColor
+            } else {
+                foreProgressLayer.strokeColor = UIColor.white.cgColor
+            }
+            return foreProgressLayer.strokeColor
+        }()
         foreProgressLayer.fillColor = UIColor.clear.cgColor
         foreProgressLayer.lineWidth = 5
     }
@@ -188,6 +197,130 @@ class ViewController: UIViewController, CAAnimationDelegate {
             make.height.equalTo(50)
             make.width.equalTo(50)
         }
+    }
+    
+    private func startTimer() {
+        timer = Timer.scheduledTimer(timeInterval: 0.001, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
+    }
+
+    private func changeToWork() {
+        guard relaxTime > 1 else {
+            stopAnimation()
+            relaxTime = 5
+            changeInterface()
+            isStarted = false
+            isWorkTime = true
+            timer.invalidate()
+            return
+        }
+        
+        relaxTime -= 1
+        timerLabel.text = formatTimer()
+    }
+
+    private func changeToRelax() {
+        guard workTime > 1 else {
+            stopAnimation()
+            workTime = 20
+            changeInterface()
+            isStarted = false
+            isWorkTime = false
+            timer.invalidate()
+            return
+        }
+        
+        workTime -= 1
+        timerLabel.text = formatTimer()
+    }
+
+
+    private func formatTimer() -> String {
+        if isWorkTime {
+            let minutes = Int(workTime) / 60 % 60
+            let seconds = Int(workTime) % 60
+            return String(format:"%02i:%02i", minutes, seconds)
+        } else {
+            let minutes = Int(relaxTime) / 60 % 60
+            let seconds = Int(relaxTime) % 60
+            return String(format:"%02i:%02i", minutes, seconds)
+        }
+    }
+
+    private func changeInterface() {
+        if isWorkTime {
+            timerButtonCancel.isEnabled = false
+            timerLabel.text = "00:05"
+            timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
+            view.backgroundColor = .white
+            
+        } else {
+            timerButtonCancel.isEnabled = false
+            timerLabel.text = "00:20"
+            timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
+            foreProgressLayer.strokeColor = UIColor.black.cgColor
+            view.backgroundColor = .black
+            
+        }
+    }
+
+    internal func animationDidStop(_ anim: CAAnimation, finished flag: Bool) {
+        stopAnimation()
+    }
+
+    //MARK: - Actions
+
+    @objc private func updateTimer() {
+        if accurateTimerCount > 0 {
+            accurateTimerCount -= 1
+            return
+        }
+        
+        accurateTimerCount = 1000
+        
+        if isWorkTime {
+            changeToRelax()
+        } else {
+            changeToWork()
+        }
+    }
+
+    @objc private func buttonStarted() {
+        timerButtonCancel.isEnabled = true
+        timerButtonCancel.alpha = 1
+        
+        if !isStarted {
+            startTimer()
+            drawForeLayer()
+            startResumeAnimation()
+            timerButtonPlay.setImage(UIImage(named: "pauseIcon"), for: .normal)
+            isStarted = true
+        } else {
+            timer.invalidate()
+            pauseAnimation()
+            timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
+            isStarted = false
+        }
+    }
+
+    @objc private func buttonCanceled() {
+        stopAnimation()
+        timerButtonCancel.isEnabled = false
+        timerButtonCancel.alpha = 0.5
+        isStarted = false
+        workTime = 20
+        relaxTime = 5
+        accurateTimerCount = 1000
+        timer.invalidate()
+        timerLabel.text = {
+            if isWorkTime {
+                timerLabel.text = "00:20"
+                timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
+            } else {
+                timerLabel.text = "00:05"
+                timerButtonPlay.setImage(UIImage(named: "playIcon"), for: .normal)
+            }
+            return timerLabel.text
+        }()
     }
 }
 
